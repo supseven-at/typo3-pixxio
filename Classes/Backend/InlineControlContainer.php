@@ -18,7 +18,7 @@ class InlineControlContainer extends \TYPO3\CMS\Backend\Form\Container\InlineCon
      * @param array $inlineConfiguration
      * @return string
      */
-    protected function renderPossibleRecordsSelectorTypeGroupDB(array $inlineConfiguration)
+    protected function renderPossibleRecordsSelectorTypeGroupDB(array $inlineConfiguration): string
     {
         $selector = parent::renderPossibleRecordsSelectorTypeGroupDB($inlineConfiguration);
 
@@ -52,18 +52,23 @@ class InlineControlContainer extends \TYPO3\CMS\Backend\Form\Container\InlineCon
         $currentStructureDomObjectIdPrefix = $this->inlineStackProcessor->getCurrentStructureDomObjectIdPrefix($this->data['inlineFirstPid']);
         $objectPrefix = $currentStructureDomObjectIdPrefix . '-' . $foreign_table;
 
+        $buttonStyle = '';
+        if (isset($inlineConfiguration['inline']['inlineNewRelationButtonStyle'])) {
+            $buttonStyle = ' style="' . $inlineConfiguration['inline']['inlineNewRelationButtonStyle'] . '"';
+        }
+
         $attributes = [
             'type' => 'button',
             'class' => 'btn btn-default pixxio pixxio-sdk-btn',
             'title' => $buttonText,
-            'style' => 'margin-left:5px',
+            'style' => $buttonStyle,
             'data-dom' => htmlspecialchars($objectPrefix),
             'data-key'=> $this->applicationId,
             'data-url' => $extensionConfiguration['url'],
             'data-token' => $extensionConfiguration['token_refresh'],
             'data-uid' => uniqid()
         ];
-        
+
         // Add auto-login data attributes if enabled
         if (isset($extensionConfiguration['auto_login']) && $extensionConfiguration['auto_login']) {
             $attributes['data-auto-login'] = '1';
