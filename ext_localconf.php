@@ -28,6 +28,40 @@ if (\TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Core\Informa
     ];
 }
 
+$GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['pixxio_extension']['data_map'] = [
+    'main' => array_replace(
+        [
+            'title'       => 'subject',
+            'description' => 'description',
+            'alternative' => 'Alt Text (Accessibility)',
+        ],
+        $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['pixxio_extension']['data_map']['main'] ?? [],
+    ),
+    'meta' => array_replace(
+        [
+            'location_city'    => 'City',
+            'location_country' => 'Country',
+            'location_region'  => 'Region',
+            'copyright'        => 'CopyrightNotice',
+            'creator_tool'     => 'Model',
+            'source'           => 'Source',
+            'color_space'      => 'ColorSpace',
+            'publisher'        => 'Publisher',
+        ],
+        $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['pixxio_extension']['data_map']['meta'] ?? [],
+    ),
+    'additional' => array_replace(
+        [
+            'color_space'   => 'colorspace',
+            'creator'       => 'creator',
+            'download_name' => 'subject',
+            'ranking'       => 'rating',
+            'caption'       => 'description',
+        ],
+        $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['pixxio_extension']['data_map']['additional'] ?? [],
+    ),
+];
+
 /**
  * Add Icon for BE Module
  */

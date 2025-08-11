@@ -17,17 +17,9 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 class FilesController
 {
-
-    private $metadataMapping = [
-        'location_city' => 'City',
-        'location_country' => 'Country',
-        'location_region' => 'Region',
-        'copyright' => 'CopyrightNotice',
-        'creator_tool' => 'Model',
-        'source' => 'Source',
-        'color_space' => 'ColorSpace',
-        'publisher' => 'Publisher'
-    ];
+    private $mainMapping = [];
+    private $metadataMapping = [];
+    private $additionalMapping = [];
 
     protected $extensionConfiguration;
     private $applikationKey = 'ghx8F66X3ix4AJ0VmS0DE8sx7';
@@ -40,6 +32,9 @@ class FilesController
     {
         $this->extensionConfiguration = \Pixxio\PixxioExtension\Utility\ConfigurationUtility::getExtensionConfiguration();
         $this->requestFactory = GeneralUtility::makeInstance(RequestFactory::class);
+        $this->mainMapping = $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['pixxio_extension']['data_map']['main'];
+        $this->metadataMapping = $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['pixxio_extension']['data_map']['meta'];
+        $this->additionalMapping = $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['pixxio_extension']['data_map']['additional'];
     }
 
     public function hasExt($key)
@@ -507,9 +502,9 @@ class FilesController
             $pixxioFile = $pixxioFile[0];
 
             $additionalFields = array(
-                'title' => $pixxioFile->subject,
-                'description' => $pixxioFile->description,
-                'alternative' => $this->getMetadataField($pixxioFile, $this->extensionConfiguration['alt_text'] ?: 'Alt Text (Accessibility)'),
+                'title'       => $pixxioFile->{$this->mainMapping['title']},
+                'description' => $pixxioFile->{$this->mainMapping['description']},
+                'alternative' => $this->getMetadataField($pixxioFile, $this->extensionConfiguration['alt_text'] ?: $this->mainMapping['alternative']),
                 'pixxio_file_id' => $pixxioFile->id,
                 //'pixxio_mediaspace' => $pixxioFile->originalFileURL,
                 'pixxio_last_sync_stamp' => time()
@@ -545,41 +540,30 @@ class FilesController
 
         $temp['unit'] = 'px';
 
-        if (isset($pixxioFile->keywords)) {
-            $temp['keywords'] = join(', ', $pixxioFile->keywords);
+        if (empty($temp['keywords']) && isset($pixxioFile->keywords)) {
+            $temp['keywords'] = implode(', ', $pixxioFile->keywords);
         }
 
-        if (isset($pixxioFile->location->latitude) && isset($pixxioFile->location->longitude)) {
+        if (empty($temp['latitude']) && isset($pixxioFile->location->latitude)) {
             $temp['latitude'] = $pixxioFile->location->latitude;
+        }
+
+        if (empty($temp['longitude']) && isset($pixxioFile->location->longitude)) {
             $temp['longitude'] = $pixxioFile->location->longitude;
         }
 
-        if (isset($pixxioFile->createDate)) {
+        if (empty($temp['content_creation_date']) && isset($pixxioFile->createDate)) {
             $temp['content_creation_date'] = strtotime($pixxioFile->createDate);
         }
 
-        if (isset($pixxioFile->modifyDate)) {
+        if (empty($temp['content_modification_date']) && isset($pixxioFile->modifyDate)) {
             $temp['content_modification_date'] = strtotime($pixxioFile->modifyDate);
         }
 
-        if (isset($pixxioFile->colorspace)) {
-            $temp['color_space'] = $pixxioFile->colorspace;
-        }
-
-        if (isset($pixxioFile->creator)) {
-            $temp['creator'] = $pixxioFile->creator;
-        }
-
-        if (isset($pixxioFile->subject)) {
-            $temp['download_name'] = $pixxioFile->subject;
-        }
-
-        if (isset($pixxioFile->rating)) {
-            $temp['ranking'] = $pixxioFile->rating;
-        }
-
-        if (isset($pixxioFile->description)) {
-            $temp['caption'] = $pixxioFile->description;
+        foreach ($this->additionalMapping as $dbField => $pixxioField) {
+            if (isset($temp->{$pixxioField})) {
+                $temp[$dbField] = $pixxioFile->{$pixxioField};
+            }
         }
 
         return $temp;
