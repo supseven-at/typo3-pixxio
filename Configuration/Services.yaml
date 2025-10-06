@@ -1,4 +1,9 @@
 services:
+  _defaults:
+    autowire: true
+    autoconfigure: true
+    public: true
+
   Pixxio\PixxioExtension\Command\SyncCommand:
     tags:
       - name: 'console.command'
@@ -6,3 +11,8 @@ services:
         description: 'Sync alternative text, description and title with your pixx.io system'
         # not required, defaults to false
         hidden: false
+
+  Pixxio\PixxioExtension\Listener\FormEngineInitListener:
+    tags:
+      - name: event.listener
+        identifier: 'pixxio/before-form-engine-page-initalized'
