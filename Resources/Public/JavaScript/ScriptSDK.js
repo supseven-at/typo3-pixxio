@@ -5,8 +5,9 @@
 import AjaxRequest from "@typo3/core/ajax/ajax-request.js";
 import Modal from "@typo3/backend/modal.js";
 import { MessageUtility } from "@typo3/backend/utility/message-utility.js";
+import DocumentService from '@typo3/core/document-service.js'
 
-function init() {
+DocumentService.ready().then(function () {
   document.addEventListener("click", function (event) {
     var buttonElement = null;
 
@@ -43,17 +44,6 @@ function init() {
       window.pixxioLastLightboxOpenerButton = buttonElement;
     }
   });
-}
-
-if (document.readyState === "complete") {
-  init();
-} else {
-  document.addEventListener("readystatechange", (event) => {
-    if (event.target.readyState === "complete") {
-      init();
-    }
-  });
-}
 
 window.addEventListener("message", (messageEvent) => {
   if (
@@ -174,3 +164,5 @@ function handleSdkReady(messageEvent) {
     }
   }
 }
+
+});
