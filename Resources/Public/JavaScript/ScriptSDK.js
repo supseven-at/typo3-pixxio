@@ -19,18 +19,28 @@ DocumentService.ready().then(function () {
 
     if (buttonElement) {
       event.preventDefault();
-      var pixxioIframe =
-        buttonElement.parentElement.querySelector("iframe.pixxio_sdk");
+
+      const uid = buttonElement.dataset.uid;
+      const pixxioLightbox = document.querySelector("#" + uid);
+
+      if (!pixxioLightbox) {
+          return;
+      }
+
+      while (pixxioLightbox.closest(".panel")) {
+          const h = pixxioLightbox.closest(".panel");
+          h.parentNode.appendChild(pixxioLightbox);
+      }
+
+      var pixxioIframe = pixxioLightbox.querySelector("iframe.pixxio_sdk");
       var pixxioIframeSrc = pixxioIframe.dataset.src;
       if (pixxioIframeSrc != "") {
         pixxioIframe.src = pixxioIframeSrc;
       }
-      var pixxioLightbox =
-        buttonElement.parentElement.querySelector(".pixxio-lightbox");
+
       pixxioLightbox.style.display = "block";
 
-      var closeButton =
-        buttonElement.parentElement.querySelector(".pixxio-close");
+      var closeButton = pixxioLightbox.querySelector(".pixxio-close");
 
       if (closeButton) {
         closeButton.addEventListener("click", (event) => {
@@ -38,7 +48,7 @@ DocumentService.ready().then(function () {
 
           pixxioLightbox.style.display = "none";
           pixxioIframe.src = "";
-        });
+        }, { once: true });
       }
 
       window.pixxioLastLightboxOpenerButton = buttonElement;

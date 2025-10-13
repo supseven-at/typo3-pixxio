@@ -4,6 +4,7 @@ namespace Pixxio\PixxioExtension\Backend;
 
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Page\AssetCollector;
+use TYPO3\CMS\Core\Utility\StringUtility;
 
 /**
  * Class InlineControlContainer
@@ -57,6 +58,8 @@ class InlineControlContainer extends \TYPO3\CMS\Backend\Form\Container\InlineCon
             $buttonStyle = ' style="' . $inlineConfiguration['inline']['inlineNewRelationButtonStyle'] . '"';
         }
 
+        $uid = StringUtility::getUniqueId('pixxio_');
+
         $attributes = [
             'type' => 'button',
             'class' => 'btn btn-default pixxio pixxio-sdk-btn',
@@ -66,7 +69,7 @@ class InlineControlContainer extends \TYPO3\CMS\Backend\Form\Container\InlineCon
             'data-key'=> $this->applicationId,
             'data-url' => $extensionConfiguration['url'],
             'data-token' => $extensionConfiguration['token_refresh'],
-            'data-uid' => uniqid()
+            'data-uid' => $uid,
         ];
 
         // Add auto-login data attributes if enabled
@@ -115,10 +118,10 @@ class InlineControlContainer extends \TYPO3\CMS\Backend\Form\Container\InlineCon
         }
 
         $button = '
-        <span ' . GeneralUtility::implodeAttributes($attributes, true) . '>
+        <button type="button" ' . GeneralUtility::implodeAttributes($attributes, true) . '>
           '.$this->iconFactory->getIcon('actions-pixxio-extension-modal-view', \TYPO3\CMS\Core\Imaging\Icon::SIZE_SMALL)->render().$buttonText.'
-        </span>
-        <div class="pixxio-lightbox" style="display:none"><div class="pixxio-close"></div><div class="pixxio-lightbox-inner"><iframe class="pixxio_sdk" data-src="'.$iframe_url .'" width="100%" height="100%"></iframe></div></div>
+        </button>
+        <div class="pixxio-lightbox" id="' . $uid . '" style="display:none"><div class="pixxio-close"></div><div class="pixxio-lightbox-inner"><iframe class="pixxio_sdk" data-src="'.$iframe_url .'" width="100%" height="100%"></iframe></div></div>
         ';
 
         $this->requireJsModules[] = 'TYPO3/CMS/PixxioExtension/ScriptSDK_v11';

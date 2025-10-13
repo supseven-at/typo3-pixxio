@@ -196,6 +196,8 @@ class FilesControlContainer extends \TYPO3\CMS\Backend\Form\Container\FilesContr
             $currentStructureDomObjectIdPrefix = $this->inlineStackProcessor->getCurrentStructureDomObjectIdPrefix($this->data['inlineFirstPid']);
             $objectPrefix = $currentStructureDomObjectIdPrefix . '-' . $foreign_table;
 
+            $uid = StringUtility::getUniqueId('pixxio_');
+
             $attributes = [
                 'type' => 'button',
                 'class' => 'btn btn-default pixxio pixxio-sdk-btn',
@@ -205,7 +207,7 @@ class FilesControlContainer extends \TYPO3\CMS\Backend\Form\Container\FilesContr
                 'data-key'=> $this->applicationId,
                 'data-url' => $extensionConfiguration['url'],
                 'data-token' => $extensionConfiguration['token_refresh'],
-                'data-uid' => uniqid()
+                'data-uid' => $uid,
             ];
 
             // Add auto-login data attributes if enabled
@@ -243,7 +245,7 @@ class FilesControlContainer extends \TYPO3\CMS\Backend\Form\Container\FilesContr
                 $pixxioMediaspace = $extensionConfiguration['url'];
             }
             $controls[] = '
-            <div class="pixxio-lightbox"><div class="pixxio-close"></div><div class="pixxio-lightbox-inner"><iframe class="pixxio_sdk" data-src="'.$iframe_url .'" width="100%" height="100%"></iframe></div></div>
+            <div class="pixxio-lightbox" id="' . $uid . '"><div class="pixxio-close"></div><div class="pixxio-lightbox-inner"><iframe class="pixxio_sdk" data-src="'.$iframe_url .'" width="100%" height="100%"></iframe></div></div>
             ';
 
             $this->javaScriptModules[] = JavaScriptModuleInstruction::create('@pixxio/pixxio-extension/ScriptSDK.js');

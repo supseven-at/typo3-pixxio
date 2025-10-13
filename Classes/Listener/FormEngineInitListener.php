@@ -19,5 +19,6 @@ class FormEngineInitListener
     public function __invoke(BeforeFormEnginePageInitializedEvent $event): void
     {
         $this->pageRenderer->loadJavaScriptModule('@pixxio/pixxio-extension/ScriptSDK.js');
+        $this->pageRenderer->addCssFile('EXT:pixxio_extension/Resources/Public/StyleSheet/StyleSDK.css');
     }
 }
