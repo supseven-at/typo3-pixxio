@@ -502,13 +502,22 @@ class FilesController
             $pixxioFile = $pixxioFile[0];
 
             $additionalFields = array(
-                'title'       => $pixxioFile->{$this->mainMapping['title']},
-                'description' => $pixxioFile->{$this->mainMapping['description']},
-                'alternative' => $this->getMetadataField($pixxioFile, $this->extensionConfiguration['alt_text'] ?: $this->mainMapping['alternative']),
                 'pixxio_file_id' => $pixxioFile->id,
                 //'pixxio_mediaspace' => $pixxioFile->originalFileURL,
                 'pixxio_last_sync_stamp' => time()
             );
+
+            if (!empty($this->mainMapping['title']) && !empty($pixxioFile->{$this->mainMapping['title']})) {
+                $additionalFields['title'] = $pixxioFile->{$this->mainMapping['title']};
+            }
+
+            if (!empty($this->mainMapping['description']) && !empty($pixxioFile->{$this->mainMapping['description']})) {
+                $additionalFields['description'] = $pixxioFile->{$this->mainMapping['description']};
+            }
+
+            if (!empty($this->mainMapping['alternative'])) {
+                $additionalFields['alternative'] = $this->getMetadataField($pixxioFile, $this->mainMapping['alternative']);
+            }
 
             if ($this->hasExt('filemetadata')) {
                 $additionalFields = array_merge($additionalFields, $this->getMetadataWithFilemetadataExt($pixxioFile));
