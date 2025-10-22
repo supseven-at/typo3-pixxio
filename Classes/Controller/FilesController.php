@@ -488,6 +488,9 @@ class FilesController
         $pixxioFiles = $this->pixxioFiles($fileIdsWithoutDeletedFiles);
 
         $io->writeln('Start Syncing metadata');
+
+        $noOverride = $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['pixxio_extension']['no_metadata_override'] ?? false;
+
         foreach ($files as $file) {
             // set meta data
             $pixxioFile = array_values(array_filter($pixxioFiles, function ($pFile) use ($file) {
@@ -501,45 +504,46 @@ class FilesController
 
             $pixxioFile = $pixxioFile[0];
 
-            $additionalFields = array(
-                'pixxio_file_id' => $pixxioFile->id,
-                //'pixxio_mediaspace' => $pixxioFile->originalFileURL,
-                'pixxio_last_sync_stamp' => time()
-            );
+            $meta = $metadata->findByFileUid($file['uid']);
+            $meta['pixxio_file_id'] = $pixxioFile->id;
+            $meta['pixxio_last_sync_stamp'] = time();
 
-            if (!empty($this->mainMapping['title']) && !empty($pixxioFile->{$this->mainMapping['title']})) {
-                $additionalFields['title'] = $pixxioFile->{$this->mainMapping['title']};
+            if ((!$noOverride || empty($meta['title'])) && !empty($this->mainMapping['title']) && !empty($pixxioFile->{$this->mainMapping['title']})) {
+                $meta['title'] = $pixxioFile->{$this->mainMapping['title']};
             }
 
-            if (!empty($this->mainMapping['description']) && !empty($pixxioFile->{$this->mainMapping['description']})) {
-                $additionalFields['description'] = $pixxioFile->{$this->mainMapping['description']};
+            if ((!$noOverride || empty($meta['description'])) && !empty($this->mainMapping['description']) && !empty($pixxioFile->{$this->mainMapping['description']})) {
+                $meta['description'] = $pixxioFile->{$this->mainMapping['description']};
             }
 
-            if (!empty($this->mainMapping['alternative'])) {
-                $additionalFields['alternative'] = $this->getMetadataField($pixxioFile, $this->mainMapping['alternative']);
+            if ((!$noOverride || empty($meta['alternative'])) && !empty($this->mainMapping['alternative'])) {
+                $meta['alternative'] = $this->getMetadataField($pixxioFile, $this->mainMapping['alternative']);
             }
 
             if ($this->hasExt('filemetadata')) {
-                $additionalFields = array_merge($additionalFields, $this->getMetadataWithFilemetadataExt($pixxioFile));
+                $meta = $this->getMetadataWithFilemetadataExt($pixxioFile, $meta, $noOverride);
             }
             $io->writeln('Metadata update for ' . $file['identifier']);
-            $metadata->update($file['uid'], $additionalFields);
+
+            $metadata->update($file['uid'], $meta);
         }
         return true;
     }
 
-    private function getMetadataWithFilemetadataExt($pixxioFile)
+    private function getMetadataWithFilemetadataExt($pixxioFile, array $meta, bool $noOverride): array
     {
-        $temp = [];
-
         foreach (array_keys($this->metadataMapping) as $key) {
             foreach (array_values((array)$pixxioFile->metadataFields) as $metadataField) {
 
                 if ($metadataField->name === $this->metadataMapping[$key]) {
-                    if (is_array($metadataField->value)) {
-                        $temp[$key] = join(',', $metadataField->value) ?: '';
-                    } else {
-                        $temp[$key] = $metadataField->value ?: '';
+                    $value = $metadataField->value;
+
+                    if (is_array($value)) {
+                        $value = join($value, ', ');
+                    }
+
+                    if ($value && (empty($meta[$key]) || !$noOverride)) {
+                        $meta[$key] = $value;
                     }
 
                     break;
@@ -547,35 +551,35 @@ class FilesController
             }
         }
 
-        $temp['unit'] = 'px';
+        $meta['unit'] = 'px';
 
-        if (empty($temp['keywords']) && isset($pixxioFile->keywords)) {
-            $temp['keywords'] = implode(', ', $pixxioFile->keywords);
+        if ((empty($meta['keywords']) || !$noOverride) && isset($pixxioFile->keywords)) {
+            $meta['keywords'] = implode(', ', $pixxioFile->keywords);
         }
 
-        if (empty($temp['latitude']) && isset($pixxioFile->location->latitude)) {
-            $temp['latitude'] = $pixxioFile->location->latitude;
+        if ((empty($meta['latitude']) || !$noOverride) && isset($pixxioFile->location->latitude)) {
+            $meta['latitude'] = $pixxioFile->location->latitude;
         }
 
-        if (empty($temp['longitude']) && isset($pixxioFile->location->longitude)) {
-            $temp['longitude'] = $pixxioFile->location->longitude;
+        if ((empty($meta['longitude']) || !$noOverride) && isset($pixxioFile->location->longitude)) {
+            $meta['longitude'] = $pixxioFile->location->longitude;
         }
 
-        if (empty($temp['content_creation_date']) && isset($pixxioFile->createDate)) {
-            $temp['content_creation_date'] = strtotime($pixxioFile->createDate);
+        if ((empty($meta['content_creation_date']) || !$noOverride) && isset($pixxioFile->createDate)) {
+            $meta['content_creation_date'] = strtotime($pixxioFile->createDate);
         }
 
-        if (empty($temp['content_modification_date']) && isset($pixxioFile->modifyDate)) {
-            $temp['content_modification_date'] = strtotime($pixxioFile->modifyDate);
+        if ((empty($meta['content_modification_date']) || !$noOverride) && isset($pixxioFile->modifyDate)) {
+            $meta['content_modification_date'] = strtotime($pixxioFile->modifyDate);
         }
 
         foreach ($this->additionalMapping as $dbField => $pixxioField) {
-            if (isset($temp->{$pixxioField})) {
-                $temp[$dbField] = $pixxioFile->{$pixxioField};
+            if (isset($pixxioFile->{$pixxioField}) && (empty($meta[$dbField]) || !$noOverride)) {
+                $meta[$dbField] = $pixxioFile->{$pixxioField};
             }
         }
 
-        return $temp;
+        return $meta;
     }
 
     private function getStorage()
