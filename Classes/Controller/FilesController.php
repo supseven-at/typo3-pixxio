@@ -369,6 +369,7 @@ class FilesController
             ->from('sys_file_metadata')
             ->where(
                 $queryBuilder->expr()->gt('pixxio_file_id', $queryBuilder->createNamedParameter(0, \PDO::PARAM_INT)),
+                $queryBuilder->expr()->eq('pixxio_deleted', $queryBuilder->createNamedParameter(0, \PDO::PARAM_INT)),
             )
             ->orderBy('pixxio_last_sync_stamp')
             ->setMaxResults(10)
@@ -444,6 +445,16 @@ class FilesController
                     $fileIds = array_values($fileIds);
                 } else {
                     $io->writeln('File which should be deleted, but extension configuration is set to not delete files: ' . $file['pixxio_file_id']);
+
+                    $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable('sys_file_metadata');
+                    $queryBuilder->getRestrictions()->removeAll();
+                    $queryBuilder
+                        ->update('sys_file_metadata')
+                        ->set('pixxio_deleted', '1', false)
+                        ->where(
+                            $queryBuilder->expr()->eq('uid', $file['uid']),
+                        )
+                        ->executeStatement();
                 }
             }
 
